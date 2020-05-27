@@ -17,6 +17,12 @@ defmodule PostManagementService.Endpoint do
 
   plug(:dispatch)
   
+ get"/"do
+ posts=Repo.all(from(Post))
+ conn
+ |>put_resp_content_type("application/json")
+ |>send_resp(200,Poison.encode!(%{:posts=>posts}))
+ end
 
   match _ do
     send_resp(conn, 404, "Page not found!")
