@@ -23,6 +23,39 @@ defmodule PostManagementService.Endpoint do
  |>put_resp_content_type("application/json")
  |>send_resp(200,Poison.encode!(%{:posts=>posts}))
  end
+ 
+ post "/create_post" do
+    {title, content, author} = {
+      Map.get(conn.params, "title", nil),
+      Map.get(conn.params, "content", nil),
+      Map.get(conn.params, "author", nil)
+    }
+    cond do
+      is_nil(title) ->
+        conn
+        |> put_status(400)
+        |> assign(:jsonapi, %{"error" => "'title' field must be provided"})
+      is_nil(content) ->
+        conn
+        |> put_status(400)
+        |> assign(:jsonapi, %{"error" => "'content' field must be provided"})
+      is_nil(author) ->
+        conn
+        |> put_status(400)
+        |> assign(:jsonapi, %{"error" => "'author' field must be provided"})
+      true ->
+        case Post.create(%{"title" => title, "content" => content, "author" => author}) do
+          {:ok, new_post}->
+            conn
+            |> put_resp_content_type("application/json")
+            |> send_resp(201, Poison.encode!(%{:data => new_post}))
+          :error ->
+            conn
+            |> put_resp_content_type("application/json")
+            |> send_resp(500, Poison.encode!(%{"error" => "An unexpected error happened"}))
+        end
+    end
+  end
 
   match _ do
     send_resp(conn, 404, "Page not found!")
