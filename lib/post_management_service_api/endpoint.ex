@@ -42,6 +42,22 @@ defmodule PostManagementService.Endpoint do
       end
   end
 
+  get"/get_post_by_id" do
+    id = Map.get(conn.params, "id", nil)
+
+    post =  Repo.get(Post, id)
+    case is_nil(post) do
+      true ->
+        conn
+        |> put_resp_content_type("application/json")
+        |> send_resp(404, Poison.encode!(%{"error" => "Post not found with this id"}))
+      false ->
+        conn
+        |>put_resp_content_type("application/json")
+        |>send_resp(200,Poison.encode!(%{:post=>post}))
+    end
+  end
+
  post "/create_post" do
     {title, content, author} = {
       Map.get(conn.params, "title", nil),
