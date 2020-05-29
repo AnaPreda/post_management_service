@@ -25,4 +25,9 @@ defmodule PostManagementService.Post do
     cs = changeset(%Post{}, params)
     Repo.insert(cs)
   end
+  
+  def update(data, params) do
+    post = changeset(data, params)
+    Repo.update(post)
+  end
 end
