@@ -76,6 +76,7 @@ delete "/delete_post" do
         |> send_resp(500, Poison.encode!(%{"error" => "An unexpected error happened"}))
     end
   end
+end
   
   match _ do
     send_resp(conn, 404, "Page not found!")
