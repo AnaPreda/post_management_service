@@ -57,6 +57,52 @@ defmodule PostManagementService.Endpoint do
     end
   end
 
+put "/update_post" do
+    {id, title, content, author} = {
+      Map.get(conn.params, "id", nil),
+      Map.get(conn.params, "title", nil),
+      Map.get(conn.params, "content", nil),
+      Map.get(conn.params, "author", nil)
+    }
+    cond do
+      is_nil(id) ->
+        conn
+        |> put_status(400)
+        |> assign(:jsonapi, %{"error" => "'id' field must be provided"})
+      is_nil(title) ->
+        conn
+        |> put_status(400)
+        |> assign(:jsonapi, %{"error" => "'title' field must be provided"})
+      is_nil(content) ->
+        conn
+        |> put_status(400)
+        |> assign(:jsonapi, %{"error" => "'content' field must be provided"})
+      is_nil(author) ->
+        conn
+        |> put_status(400)
+        |> assign(:jsonapi, %{"error" => "'author' field must be provided"})
+      true ->
+        post = Repo.get(Post, id)
+        case is_nil(post) do
+          true ->
+            conn
+            |> put_resp_content_type("application/json")
+            |> send_resp(404, Poison.encode!(%{"error" => "Post not found"}))
+          false ->
+          case Post.update(post, %{"post_id"=> id, "title" => title, "content" => content, "author" => author}) do
+            {:ok, updated_post}->
+              conn
+              |> put_resp_content_type("application/json")
+              |> send_resp(200, Poison.encode!(%{:data => updated_post}))
+            :error ->
+              conn
+              |> put_resp_content_type("application/json")
+              |> send_resp(500, Poison.encode!(%{"error" => "An unexpected error happened"}))
+          end
+        end
+    end
+  end
+
 delete "/delete_post" do
     id =  Map.get(conn.params, "id", nil)
 
