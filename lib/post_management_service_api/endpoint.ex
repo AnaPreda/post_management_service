@@ -17,13 +17,14 @@ defmodule PostManagementService.Endpoint do
 
   plug(:dispatch)
   
- get"/"do
- posts=Repo.all(from(Post))
+ get "/get_posts" do
+ posts = Repo.all(from(Post))
+
  conn
  |>put_resp_content_type("application/json")
  |>send_resp(200,Poison.encode!(%{:posts=>posts}))
  end
- 
+
  post "/create_post" do
     {title, content, author} = {
       Map.get(conn.params, "title", nil),
@@ -57,7 +58,7 @@ defmodule PostManagementService.Endpoint do
     end
   end
 
-put "/update_post" do
+ put "/update_post" do
     {id, title, content, author} = {
       Map.get(conn.params, "id", nil),
       Map.get(conn.params, "title", nil),
@@ -103,7 +104,7 @@ put "/update_post" do
     end
   end
 
-delete "/delete_post" do
+ delete "/delete_post" do
     id =  Map.get(conn.params, "id", nil)
 
     post = Repo.get(Post, id)
@@ -113,18 +114,18 @@ delete "/delete_post" do
         |> put_resp_content_type("application/json")
         |> send_resp(404, Poison.encode!(%{"error" => "Post not found"}))
     false ->
-    case Repo.delete post do
-      {:ok, struct} ->
-        conn
-        |> put_resp_content_type("application/json")
-        |> send_resp(200, Poison.encode!(%{:data => struct}))
-      {:error, changeset} ->
-        conn
-        |> put_resp_content_type("application/json")
-        |> send_resp(500, Poison.encode!(%{"error" => "An unexpected error happened"}))
+      case Repo.delete post do
+        {:ok, struct} ->
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, Poison.encode!(%{:data => struct}))
+        {:error, changeset} ->
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(500, Poison.encode!(%{"error" => "An unexpected error happened"}))
+      end
     end
   end
-end
   
   match _ do
     send_resp(conn, 404, "Page not found!")
