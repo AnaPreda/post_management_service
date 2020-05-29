@@ -24,6 +24,23 @@ defmodule PostManagementService.Endpoint do
  |>put_resp_content_type("application/json")
  |>send_resp(200,Poison.encode!(%{:posts=>posts}))
  end
+ 
+ 
+  get"/get_posts_by_author" do
+    author = Map.get(conn.params, "author", nil)
+
+    posts =  Repo.all(from post in Post, where: post.author == ^author)
+      case is_nil(posts) do
+        true ->
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(404, Poison.encode!(%{"error" => "Posts not found for this author"}))
+        false ->
+          conn
+          |>put_resp_content_type("application/json")
+          |>send_resp(200,Poison.encode!(%{:posts=>posts}))
+      end
+  end
 
  post "/create_post" do
     {title, content, author} = {
