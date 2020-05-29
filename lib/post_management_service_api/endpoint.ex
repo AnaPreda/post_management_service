@@ -62,9 +62,11 @@ delete "/delete_post" do
 
     post = Repo.get(Post, id)
     case is_nil(post) do
+    true ->
         conn
         |> put_resp_content_type("application/json")
         |> send_resp(404, Poison.encode!(%{"error" => "Post not found"}))
+    false ->
     case Repo.delete post do
       {:ok, struct} ->
         conn
