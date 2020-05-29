@@ -57,6 +57,26 @@ defmodule PostManagementService.Endpoint do
     end
   end
 
+delete "/delete_post" do
+    id =  Map.get(conn.params, "id", nil)
+
+    post = Repo.get(Post, id)
+    case is_nil(post) do
+        conn
+        |> put_resp_content_type("application/json")
+        |> send_resp(404, Poison.encode!(%{"error" => "Post not found"}))
+    case Repo.delete post do
+      {:ok, struct} ->
+        conn
+        |> put_resp_content_type("application/json")
+        |> send_resp(200, Poison.encode!(%{:data => struct}))
+      {:error, changeset} ->
+        conn
+        |> put_resp_content_type("application/json")
+        |> send_resp(500, Poison.encode!(%{"error" => "An unexpected error happened"}))
+    end
+  end
+  
   match _ do
     send_resp(conn, 404, "Page not found!")
   end
