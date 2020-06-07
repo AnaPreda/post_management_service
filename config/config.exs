@@ -7,7 +7,8 @@ config :post_management_service,
        jwt_validity: 3600,
        api_host: "localhost",
        api_version: "2",
-       api_prefix: "http"
+       api_prefix: "http",
+       um_url: "https://myblog-um.gigalixirapp.com"
 #
 config :post_management_service, PostManagementService.Endpoint,
        url: [host: "localhost"]

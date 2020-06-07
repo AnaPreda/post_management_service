@@ -45,17 +45,31 @@ defmodule PostManagementService.Endpoint do
   get"/get_post_by_id" do
     id = Map.get(conn.params, "id", nil)
 
-    post =  Repo.get(Post, id)
-    case is_nil(post) do
+    url = Application.get_env(:post_management_service, :um_url) <> "/validate-token"
+    token = List.last(String.split(List.first(get_req_header(conn, "authorization"))))
+    headers = [{"Content-type", "application/json"}]
+    body = "{\"token\":\"" <> token <> "\"}"
+    resp = HTTPotion.post!(url , [body: body, headers: headers])
+    status = resp.status_code()
+    case status === 200 do
       true ->
-        conn
-        |> put_resp_content_type("application/json")
-        |> send_resp(404, Poison.encode!(%{"error" => "Post not found with this id"}))
+        post =  Repo.get(Post, id)
+        case is_nil(post) do
+          true ->
+            conn
+            |> put_resp_content_type("application/json")
+            |> send_resp(404, Poison.encode!(%{"error" => "Post not found with this id"}))
+          false ->
+            conn
+            |>put_resp_content_type("application/json")
+            |>send_resp(200,Poison.encode!(%{:post=>post}))
+        end
       false ->
         conn
         |>put_resp_content_type("application/json")
-        |>send_resp(200,Poison.encode!(%{:post=>post}))
+        |>send_resp(401,Poison.encode!(%{:error=>"unauthorized"}))
     end
+
   end
 
  post "/create_post" do
