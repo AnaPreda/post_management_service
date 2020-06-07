@@ -20,28 +20,46 @@ defmodule PostManagementService.Router do
   plug(:dispatch)
 
   get "/get_posts" do
-    posts = Repo.all(from(Post))
 
-    conn
-    |>put_resp_content_type("application/json")
-    |>send_resp(200,Poison.encode!(%{:posts=>posts}))
+    token = List.last(String.split(List.first(get_req_header(conn, "authorization"))))
+
+    case Utils.is_valid_token(token) do
+      true ->
+        posts = Repo.all(from(Post))
+        conn
+        |>put_resp_content_type("application/json")
+        |>send_resp(200,Poison.encode!(%{:posts=>posts}))
+      false ->
+        conn
+        |>put_resp_content_type("application/json")
+        |>send_resp(401,Poison.encode!(%{:error=>"Unauthorized"}))
+    end
   end
 
 
   get"/get_posts_by_author" do
     author = Map.get(conn.params, "author", nil)
+    token = List.last(String.split(List.first(get_req_header(conn, "authorization"))))
 
-    posts =  Repo.all(from post in Post, where: post.author == ^author)
-    case is_nil(posts) do
+    case Utils.is_valid_token(token) do
       true ->
-        conn
-        |> put_resp_content_type("application/json")
-        |> send_resp(404, Poison.encode!(%{"error" => "Posts not found for this author"}))
+        posts =  Repo.all(from post in Post, where: post.author == ^author)
+        case is_nil(posts) do
+          true ->
+            conn
+            |> put_resp_content_type("application/json")
+            |> send_resp(404, Poison.encode!(%{"error" => "Posts not found for this author"}))
+          false ->
+            conn
+            |>put_resp_content_type("application/json")
+            |>send_resp(200,Poison.encode!(%{:posts=>posts}))
+        end
       false ->
         conn
         |>put_resp_content_type("application/json")
-        |>send_resp(200,Poison.encode!(%{:posts=>posts}))
+        |>send_resp(401,Poison.encode!(%{:error=>"Unauthorized"}))
     end
+
   end
 
   get"/get_post_by_id" do
@@ -89,15 +107,24 @@ defmodule PostManagementService.Router do
         |> put_status(400)
         |> assign(:jsonapi, %{"error" => "'author' field must be provided"})
       true ->
-        case Post.create(%{"title" => title, "content" => content, "author" => author}) do
-          {:ok, new_post}->
+        token = List.last(String.split(List.first(get_req_header(conn, "authorization"))))
+
+        case Utils.is_valid_token(token) do
+          true ->
+            case Post.create(%{"title" => title, "content" => content, "author" => author}) do
+              {:ok, new_post}->
+                conn
+                |> put_resp_content_type("application/json")
+                |> send_resp(201, Poison.encode!(%{:data => new_post}))
+              :error ->
+                conn
+                |> put_resp_content_type("application/json")
+                |> send_resp(500, Poison.encode!(%{"error" => "An unexpected error happened"}))
+            end
+          false ->
             conn
-            |> put_resp_content_type("application/json")
-            |> send_resp(201, Poison.encode!(%{:data => new_post}))
-          :error ->
-            conn
-            |> put_resp_content_type("application/json")
-            |> send_resp(500, Poison.encode!(%{"error" => "An unexpected error happened"}))
+            |>put_resp_content_type("application/json")
+            |>send_resp(401,Poison.encode!(%{:error=>"Unauthorized"}))
         end
     end
   end
@@ -127,6 +154,42 @@ defmodule PostManagementService.Router do
         |> put_status(400)
         |> assign(:jsonapi, %{"error" => "'author' field must be provided"})
       true ->
+        token = List.last(String.split(List.first(get_req_header(conn, "authorization"))))
+
+        case Utils.is_valid_token(token) do
+          true ->
+            post = Repo.get(Post, id)
+            case is_nil(post) do
+              true ->
+                conn
+                |> put_resp_content_type("application/json")
+                |> send_resp(404, Poison.encode!(%{"error" => "Post not found"}))
+              false ->
+                case Post.update(post, %{"post_id"=> id, "title" => title, "content" => content, "author" => author}) do
+                  {:ok, updated_post}->
+                    conn
+                    |> put_resp_content_type("application/json")
+                    |> send_resp(200, Poison.encode!(%{:data => updated_post}))
+                  :error ->
+                    conn
+                    |> put_resp_content_type("application/json")
+                    |> send_resp(500, Poison.encode!(%{"error" => "An unexpected error happened"}))
+                end
+            end
+          false ->
+            conn
+            |>put_resp_content_type("application/json")
+            |>send_resp(401,Poison.encode!(%{:error=>"Unauthorized"}))
+        end
+    end
+  end
+
+  delete "/delete_post" do
+    id =  Map.get(conn.params, "id", nil)
+    token = List.last(String.split(List.first(get_req_header(conn, "authorization"))))
+
+    case Utils.is_valid_token(token) do
+      true ->
         post = Repo.get(Post, id)
         case is_nil(post) do
           true ->
@@ -134,40 +197,21 @@ defmodule PostManagementService.Router do
             |> put_resp_content_type("application/json")
             |> send_resp(404, Poison.encode!(%{"error" => "Post not found"}))
           false ->
-            case Post.update(post, %{"post_id"=> id, "title" => title, "content" => content, "author" => author}) do
-              {:ok, updated_post}->
+            case Repo.delete post do
+              {:ok, struct} ->
                 conn
                 |> put_resp_content_type("application/json")
-                |> send_resp(200, Poison.encode!(%{:data => updated_post}))
-              :error ->
+                |> send_resp(200, Poison.encode!(%{:data => struct}))
+              {:error, changeset} ->
                 conn
                 |> put_resp_content_type("application/json")
                 |> send_resp(500, Poison.encode!(%{"error" => "An unexpected error happened"}))
             end
         end
-    end
-  end
-
-  delete "/delete_post" do
-    id =  Map.get(conn.params, "id", nil)
-
-    post = Repo.get(Post, id)
-    case is_nil(post) do
-      true ->
-        conn
-        |> put_resp_content_type("application/json")
-        |> send_resp(404, Poison.encode!(%{"error" => "Post not found"}))
       false ->
-        case Repo.delete post do
-          {:ok, struct} ->
-            conn
-            |> put_resp_content_type("application/json")
-            |> send_resp(200, Poison.encode!(%{:data => struct}))
-          {:error, changeset} ->
-            conn
-            |> put_resp_content_type("application/json")
-            |> send_resp(500, Poison.encode!(%{"error" => "An unexpected error happened"}))
-        end
+        conn
+        |>put_resp_content_type("application/json")
+        |>send_resp(401,Poison.encode!(%{:error=>"Unauthorized"}))
     end
   end
 end
