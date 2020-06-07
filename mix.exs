@@ -39,7 +39,9 @@ defmodule PostManagementService.MixProject do
       {:ecto_sql, "~> 3.2"},
       {:cors_plug, "~> 1.5"},
       {:postgrex, "~> 0.15"},
-      {:httpotion, "~> 3.1.0"}
+      {:httpotion, "~> 3.1.0"},
+      {:connection, "~> 1.0"},
+      {:blocking_queue, "~> 1.3"}
     ]
   end
     defp aliases do

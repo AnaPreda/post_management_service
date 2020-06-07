@@ -107,5 +107,6 @@
     <orderEntry type="library" name="ojson" level="project" />
     <orderEntry type="library" name="httpotion" level="project" />
     <orderEntry type="library" name="ibrowse" level="project" />
+    <orderEntry type="library" name="blocking_queue" level="project" />
   </component>
 </module>

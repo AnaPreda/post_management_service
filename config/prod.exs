@@ -17,4 +17,16 @@ config :post_management_service, PostManagementService.Endpoint,
 config :cors_plug,
        send_preflight_response?: true
 
+config :logger,
+       backends: [
+              {JsonLogger.TCP, :logstash}
+       ]
+
+config :logger, :console, format: "[$level] $message\n",
+                          level: :info
+
+config :logger, :logstash,
+       level: :debug,
+       host: 'ec2-34-216-126-161.us-west-2.compute.amazonaws.com',
+       port: 1514
 
