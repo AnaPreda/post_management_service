@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/lib" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/spec" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/blocking_queue" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/certifi" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/combine" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/connection" />
@@ -108,5 +109,8 @@
     <orderEntry type="library" name="httpotion" level="project" />
     <orderEntry type="library" name="ibrowse" level="project" />
     <orderEntry type="library" name="blocking_queue" level="project" />
+    <orderEntry type="library" name="excheck" level="project" />
+    <orderEntry type="library" name="triq" level="project" />
+    <orderEntry type="library" name="mixunit" level="project" />
   </component>
 </module>
